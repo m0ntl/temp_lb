@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-### Update resource names here ###
+### Update resource details here ###
 sub_id="64fd3ba5-b109-434e-aa61-6dd72c2341f2"
 vmss1_name="ss1-vmss"
 vmss2_name="ss2-vmss"
@@ -11,6 +11,9 @@ lb_name="my-lb"
 hp_name="http_probe"
 bap_name="myvnet-beap"
 lb_rg="myrg"
+lb_ip="10.0.1.4"
+vmss1_ip="10.0.100.5"
+vmss2_ip="10.0.101.4"
 
 # Resource path definition
 py="python main.py"
@@ -19,9 +22,6 @@ vmss1_id="${sub_base_path}/resourceGroups/${rg1_name}/providers/Microsoft.Comput
 vmss2_id="${sub_base_path}/resourceGroups/${rg2_name}/providers/Microsoft.Compute/virtualMachineScaleSets/${vmss2_name}"
 hp_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/probes/${hp_name}"
 bap_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/backendAddressPools/${bap_name}"
-lb_ip="10.0.1.4"
-vmss1_ip="10.0.100.5"
-vmss2_ip="10.0.101.4"
 
 # Start of script
 echo "starting script"
@@ -68,8 +68,23 @@ do
 	lb_response=$(curl http://$lb_ip --connect-timeout 3)
 done
 
+#switch over to vmss2
+$py open-vmss --vmss-id $vmss2_id
+$py register-vmss --bap-id $bap_id --vmss-id $vmss2_id --health-probe-id $hp_id
+$py perform-upgrade --vmss-id $vmss2_id
+$py close-vmss --vmss-id $vmss1_id #for testing only
+vmss2_response=$(curl http://$vmss2_ip)
+while [ "${vmss2_response}" != "${lb_response}" ]
+do
+	echo "waiting for LB to reflect vmss1 response"
+	sleep 0.05
+	lb_response=$(curl http://$lb_ip --connect-timeout 3)
+done
+
+
 echo "script DONE"
 echo $vmss1_response
+echo $vmss2_response
 echo $lb_response
 
 
