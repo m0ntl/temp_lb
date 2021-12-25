@@ -61,7 +61,7 @@ $py perform-upgrade --vmss-id $vmss1_id
 vmss1_response=$(curl http://$vmss1_ip)
 lb_response=$(curl http://$lb_ip --connect-timeout 3)
 $py open-vmss --vmss-id $vmss1_id
-while [ vmss1_response != lb_response ]
+while [ "${vmss1_response}" != "${lb_response}" ]
 do
 	echo "waiting for LB to reflect vmss1 response"
 	sleep 0.05
