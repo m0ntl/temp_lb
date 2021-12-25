@@ -76,7 +76,7 @@ $py close-vmss --vmss-id $vmss1_id #for testing only
 vmss2_response=$(curl http://$vmss2_ip)
 while [ "${vmss2_response}" != "${lb_response}" ]
 do
-	echo "waiting for LB to reflect vmss1 response"
+	echo "waiting for LB to reflect vmss2 response"
 	sleep 0.05
 	lb_response=$(curl http://$lb_ip --connect-timeout 3)
 done
