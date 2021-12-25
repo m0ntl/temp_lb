@@ -67,6 +67,7 @@ vmss1_response=$(curl http://$vmss1_ip)
 lb_response=$(curl http://$lb_ip --connect-timeout 3)
 while [ vmss1_response != lb_response]
 do
+	echo "waiting for LB to reflect vmss1 response"
 	sleep 0.05
 	lb_response=$(curl http://$lb_ip --connect-timeout 3)
 done
