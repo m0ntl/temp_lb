@@ -54,13 +54,13 @@ echo "Runtime of deregistering vmss2 from bap: ${runtime2}"
 # 3. Connect VMSS2
 # 4. Block VMSS1
 # 5. Disconnect VMSS1
-
+$py close-vmss --vmss-id $vmss1_id #for testing only
 $py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
-$py open-vmss --vmss-id $vmss1_id
 $py perform-upgrade --vmss-id $vmss1_id
 #Test connection here
 vmss1_response=$(curl http://$vmss1_ip)
 lb_response=$(curl http://$lb_ip --connect-timeout 3)
+$py open-vmss --vmss-id $vmss1_id
 while [ vmss1_response != lb_response ]
 do
 	echo "waiting for LB to reflect vmss1 response"
