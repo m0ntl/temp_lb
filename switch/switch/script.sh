@@ -71,6 +71,10 @@ do
 	lb_response=$(curl http://$lb_ip --connect-timeout 3)
 done
 
+echo "script DONE"
+echo $vmss1_response
+echo $lb_response
+
 
 
 
