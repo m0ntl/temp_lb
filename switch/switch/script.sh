@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 ### Update resource names here ###
 sub_id="64fd3ba5-b109-434e-aa61-6dd72c2341f2"
 vmss1_name="ss1-vmss"
