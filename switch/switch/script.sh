@@ -75,18 +75,66 @@ open_timer(){
 }
 
 close_timer(){
-	echo "Starting close_timer test"
+	#Clean enviroment - deregister + open port + register + update
 	deregisterAllVMSS
+	echo "Starting close_timer test"
+	$py open-vmss --vmss-id $vmss1_id
+	$py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
+	$py perform-upgrade --vmss-id $vmss1_id
+	
+	# Wait for port to be open (same response from lb and vmss)
+	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
+	while [[ $lb_response != *"Blue"* ]] || [[ $vmss1_response != *"Blue"* ]] 
+	do
+		echo "Waiting for port to be open..."
+		echo "lb rsponse is: ${lb_response}"
+		echo "vmss1 response is: ${vmss1_response}"
+		sleep 1
+		lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+		vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
+	done
+	
+	#Close port and start timer
+	$py close-vmss --vmss-id $vmss1_id 
+	#Start timer
+	startClosePortTiming=`date +%s`
+	#fetch response directly & via lb
+	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
+	#wait for vmss & lb to return empty
+	while [[ $lb_response == *"Blue"* ]] || [[ $vmss1_response == *"Blue"* ]] 
+	do
+		echo "lb rsponse is: ${lb_response}"
+		echo "vmss1 response is: ${vmss1_response}"
+		sleep 1
+		lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+		vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
+	done
+	#Close timer
+	endClosePortTiming=`date +%s.%N`
+	echo "lb rsponse is: ${lb_response}"
+	echo "vmss1 response is: ${vmss1_response}"
+	closePortTotalTime=$( echo "$endClosePortTiming - $startClosePortTiming" | bc -l )
+	#Echo total time taken
+	echo "total time: $closePortTotalTime"
 }
 
-for var in "$@"
-do
-	echo "$var"
-	if [[ $allowed_commands =~ $var ]]; 
-	then 
-		$var 
-	fi
-done
+if [ $# == 0 ] 
+then
+	help
+else
+	for var in "$@"
+	do
+		if [[ $allowed_commands =~ $var ]]; 
+		then 
+			$var 
+		else
+			echo "Invalid argument: $var"
+			echo "run with \"help\" for possible arguments"
+		fi
+	done
+fi
 
 
 ### test order ###
