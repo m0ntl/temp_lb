@@ -69,7 +69,7 @@ $py open-vmss --vmss-id $vmss1_id
 startOpenPortTiming=`date +%s`
 lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
 vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
-while [[ $lb_response != *"Blue"* ]] && [[ $vmss1_response != *"Blue"* ]] 
+while [[ $lb_response != *"Blue"* ]] || [[ $vmss1_response != *"Blue"* ]] 
 do
 	echo "lb rsponse is: ${lb_response}"
 	echo "vmss1 response is: ${vmss1_response}"
