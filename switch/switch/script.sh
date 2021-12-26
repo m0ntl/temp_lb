@@ -66,8 +66,9 @@ sleep 30
 $py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
 $py perform-upgrade --vmss-id $vmss1_id
 $py open-vmss --vmss-id $vmss1_id
+startOpenPortTiming=`date +%s`
 lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-vmss1_response=$(curl http://$vmss1_ip -s)
+vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
 while [[ $lb_response != *"Blue"* ]] && [[ $vmss1_response != *"Blue"* ]] 
 do
 	echo "lb rsponse is: ${lb_response}"
@@ -76,9 +77,11 @@ do
 	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
 	vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
 done
-
+endOpenPortTiming=`date +%s.%N`
 echo "lb rsponse is: ${lb_response}"
 echo "vmss1 response is: ${vmss1_response}"
+openPortTotalTime=$( echo "$endOpenPortTiming - $startOpenPortTiming" | bc -l )
+echo "total time: $openPortTotalTime"
 #echo "Connected VMSS1 with nsg blocking HP"
 #echo "vmss1_response: ${vmss1_response}"
 #echo "lb_response: ${lb_response}"
