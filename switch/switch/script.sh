@@ -23,36 +23,71 @@ vmss2_id="${sub_base_path}/resourceGroups/${rg2_name}/providers/Microsoft.Comput
 hp_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/probes/${hp_name}"
 bap_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/backendAddressPools/${bap_name}"
 
-#Script progress indicator
-spin[0]="-"
-spin[1]="\\"
-spin[2]="|"
-spin[3]="/"
+allowed_commands=["help","open_timer","close_timer"]
 
-# Start of script
-echo "starting script"
+deregisterAllVMSS(){
+	#Disconnect both vmss from bap in case they were connected before
+	echo "Starting to deregister VMSS..."
+	{
+		$py deregister-vmss --vmss-id $vmss1_id && echo "Deregistration successful for vmss 1"
+		$py perform-upgrade --vmss-id $vmss1_id
+	} || {
+		echo "Failed to deregister vmss 1"
+	}
+	{
+		$py deregister-vmss --vmss-id $vmss2_id && echo "Deregistration successful for vmss 2"  
+		$py perform-upgrade --vmss-id $vmss2_id
+	} || {
+		echo "Failed to deregister vmss 2"
+	}
+}
 
-#Disconnect both vmss from bap in case they were connected before
-{
-	start=`date +%s`
-	$py deregister-vmss --vmss-id $vmss1_id && echo "Deregistration successful for vmss 1"
+help(){
+	echo "Script to test Forter VMSS PoC"
+	echo "Enter 1 or more of the following options:"
+	echo "open_timer - how long it takes for a port open to take effect both directly & via lb"
+	echo "close_timer - how long it takes for a port close to stop responding directly & via lb"
+}
+
+open_timer(){
+	echo "Starting open_timer test"
+	deregisterAllVMSS
+	$py close-vmss --vmss-id $vmss1_id 
+	$py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
 	$py perform-upgrade --vmss-id $vmss1_id
-	end=`date +%s.%N`
-	runtime1=$( echo "$end - $start" | bc -l )
-} || {
-	echo "Failed to deregister vmss 1"
+	$py open-vmss --vmss-id $vmss1_id
+	startOpenPortTiming=`date +%s`
+	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
+	while [[ $lb_response != *"Blue"* ]] || [[ $vmss1_response != *"Blue"* ]] 
+	do
+		echo "lb rsponse is: ${lb_response}"
+		echo "vmss1 response is: ${vmss1_response}"
+		sleep 1
+		lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+		vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
+	done
+	endOpenPortTiming=`date +%s.%N`
+	echo "lb rsponse is: ${lb_response}"
+	echo "vmss1 response is: ${vmss1_response}"
+	openPortTotalTime=$( echo "$endOpenPortTiming - $startOpenPortTiming" | bc -l )
+	echo "total time: $openPortTotalTime"
 }
-{
-	start=`date +%s`
-	$py deregister-vmss --vmss-id $vmss2_id && echo "Deregistration successful for vmss 2"  
-	$py perform-upgrade --vmss-id $vmss2_id
-	end=`date +%s.%N`
-	runtime2=$( echo "$end - $start" | bc -l )
-} || {
-	echo "Failed to deregister vmss 2"
+
+close_timer(){
+	echo "Starting close_timer test"
+	deregisterAllVMSS
 }
-#echo "Runtime of deregistering vmss1 from bap: ${runtime1}"
-#echo "Runtime of deregistering vmss2 from bap: ${runtime2}"
+
+for var in "$@"
+do
+	echo "$var"
+	if [[ $allowed_commands =~ $var ]]; 
+	then 
+		$var 
+	fi
+done
+
 
 ### test order ###
 # 1. Connect VMSS1
@@ -60,28 +95,7 @@ echo "starting script"
 # 3. Connect VMSS2
 # 4. Block VMSS1
 # 5. Disconnect VMSS1
-echo "Start test"
-$py close-vmss --vmss-id $vmss1_id #for testing only
-sleep 30
-$py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
-$py perform-upgrade --vmss-id $vmss1_id
-$py open-vmss --vmss-id $vmss1_id
-startOpenPortTiming=`date +%s`
-lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
-while [[ $lb_response != *"Blue"* ]] || [[ $vmss1_response != *"Blue"* ]] 
-do
-	echo "lb rsponse is: ${lb_response}"
-	echo "vmss1 response is: ${vmss1_response}"
-	sleep 1
-	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-	vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
-done
-endOpenPortTiming=`date +%s.%N`
-echo "lb rsponse is: ${lb_response}"
-echo "vmss1 response is: ${vmss1_response}"
-openPortTotalTime=$( echo "$endOpenPortTiming - $startOpenPortTiming" | bc -l )
-echo "total time: $openPortTotalTime"
+#echo "Start test"
 #echo "Connected VMSS1 with nsg blocking HP"
 #echo "vmss1_response: ${vmss1_response}"
 #echo "lb_response: ${lb_response}"
