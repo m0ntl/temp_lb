@@ -103,7 +103,7 @@ close_timer(){
 	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
 	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
 	#wait for vmss & lb to return empty
-	while [[ $lb_response == *"Blue"* ]] || [[ $vmss1_response == *"Blue"* ]] 
+	while [[ $lb_response == *"Blue"* ]] && [[ $vmss1_response == *"Blue"* ]] 
 	do
 		echo "Waiting for port to be CLOSED..."
 		echo "lb rsponse is: ${lb_response}"
