@@ -74,7 +74,7 @@ do
 	echo "vmss1 response is: ${vmss1_response}"
 	sleep 1
 	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-	vmss1_response=$(curl http://$vmss1_ip -s)
+	vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
 done
 
 echo "lb rsponse is: ${lb_response}"

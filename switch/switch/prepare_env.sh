@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ $(awk -F= '/^NAME/{print $2}' /etc/os-release) != "\"Ubuntu\"" ]] && [[ $(awk -F= '/^VERSION_ID/{print $2}' /etc/os-release) != "\"20.04\"" ]]; 
+if [[ $(awk -F= '/^NAME/{print $2}' /etc/os-release) != "\"Ubuntu\"" ]] || [[ $(awk -F= '/^VERSION_ID/{print $2}' /etc/os-release) != "\"20.04\"" ]]; 
 then
 	{ echo "Script works only on Ubuntu Focal"; exit $ERRCODE; }
 else
