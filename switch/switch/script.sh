@@ -105,6 +105,7 @@ close_timer(){
 	#wait for vmss & lb to return empty
 	while [[ $lb_response == *"Blue"* ]] || [[ $vmss1_response == *"Blue"* ]] 
 	do
+		echo "Waiting for port to be CLOSED..."
 		echo "lb rsponse is: ${lb_response}"
 		echo "vmss1 response is: ${vmss1_response}"
 		sleep 1
