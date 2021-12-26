@@ -23,6 +23,12 @@ vmss2_id="${sub_base_path}/resourceGroups/${rg2_name}/providers/Microsoft.Comput
 hp_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/probes/${hp_name}"
 bap_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/backendAddressPools/${bap_name}"
 
+#Script progress indicator
+spin[0]="-"
+spin[1]="\\"
+spin[2]="|"
+spin[3]="/"
+
 # Start of script
 echo "starting script"
 
@@ -45,8 +51,8 @@ echo "starting script"
 } || {
 	echo "Failed to deregister vmss 2"
 }
-echo "Runtime of deregistering vmss1 from bap: ${runtime1}"
-echo "Runtime of deregistering vmss2 from bap: ${runtime2}"
+#echo "Runtime of deregistering vmss1 from bap: ${runtime1}"
+#echo "Runtime of deregistering vmss2 from bap: ${runtime2}"
 
 ### test order ###
 # 1. Connect VMSS1
@@ -54,18 +60,25 @@ echo "Runtime of deregistering vmss2 from bap: ${runtime2}"
 # 3. Connect VMSS2
 # 4. Block VMSS1
 # 5. Disconnect VMSS1
+echo "\n_____________\nStarting Test"
 $py close-vmss --vmss-id $vmss1_id #for testing only
 $py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
 $py perform-upgrade --vmss-id $vmss1_id
 #Test connection here
 vmss1_response=$(curl http://$vmss1_ip)
 lb_response=$(curl http://$lb_ip --connect-timeout 3)
+echo "Connected VMSS1 with nsg blocking HP"
+echo "vmss1_response: ${vmss1_response}"
+echo "lb_response: ${lb_response}"
+echo "now opening the NSG and waiting for LB to return correct page..."
 $py open-vmss --vmss-id $vmss1_id
+echo "waiting for LB to reflect vmss1 response"
 while [ "${vmss1_response}" != "${lb_response}" ]
 do
-	echo "waiting for LB to reflect vmss1 response"
+	#echo "waiting for LB to reflect vmss1 response"
+	echo -ne "\b$i"
 	sleep 0.05
-	lb_response=$(curl http://$lb_ip --connect-timeout 3)
+	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
 done
 
 #switch over to vmss2
@@ -74,11 +87,13 @@ $py register-vmss --bap-id $bap_id --vmss-id $vmss2_id --health-probe-id $hp_id
 $py perform-upgrade --vmss-id $vmss2_id
 $py close-vmss --vmss-id $vmss1_id #for testing only
 vmss2_response=$(curl http://$vmss2_ip)
+echo "waiting for LB to reflect vmss2 response"
 while [ "${vmss2_response}" != "${lb_response}" ]
 do
-	echo "waiting for LB to reflect vmss2 response"
+	#echo "waiting for LB to reflect vmss2 response"
+	echo -ne "\b$i"
 	sleep 0.05
-	lb_response=$(curl http://$lb_ip --connect-timeout 3)
+	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
 done
 
 
