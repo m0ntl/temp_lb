@@ -79,8 +79,11 @@ close_timer(){
 	deregisterAllVMSS
 	echo "Starting close_timer test"
 	$py open-vmss --vmss-id $vmss1_id
+	$py open-vmss --vmss-id $vmss2_id
 	$py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
+	$py register-vmss --bap-id $bap_id --vmss-id $vmss2_id --health-probe-id $hp_id
 	$py perform-upgrade --vmss-id $vmss1_id
+	$py perform-upgrade --vmss-id $vmss2_id
 	
 	# Wait for port to be open (same response from lb and vmss)
 	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
