@@ -100,7 +100,7 @@ close_timer(){
 	#Start timer
 	startClosePortTiming=`date +%s`
 	#fetch response directly & via lb
-	$py query-lb --vmss-id $vmss1_id --desire-unhealthy-status
+	$py query-lb --vmss-id $vmss1_id --desire-unhealthy-status true
 	#Close timer
 	endClosePortTiming=`date +%s.%N`
 	
