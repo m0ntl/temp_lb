@@ -78,31 +78,35 @@ close_timer(){
 	#Clean enviroment - deregister + open port + register + update
 	deregisterAllVMSS
 	echo "Starting close_timer test"
+	echo "open ports"
 	$py open-vmss --vmss-id $vmss1_id
 	$py open-vmss --vmss-id $vmss2_id
+	echo "Register vmss"
 	$py register-vmss --bap-id $bap_id --vmss-id $vmss1_id --health-probe-id $hp_id
 	$py register-vmss --bap-id $bap_id --vmss-id $vmss2_id --health-probe-id $hp_id
+	echo "Perform upgrade"
 	$py perform-upgrade --vmss-id $vmss1_id
 	$py perform-upgrade --vmss-id $vmss2_id
-	
+	echo "get initial response"
 	# Wait for port to be open (same response from lb and vmss)
 	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
 	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
-	while [[ $lb_response != *"Blue"* ]] || [[ $vmss1_response != *"Blue"* ]] 
-	do
-		echo "Waiting for port to be open..."
-		echo "lb rsponse is: ${lb_response}"
-		echo "vmss1 response is: ${vmss1_response}"
-		sleep 1
-		lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-		vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
-	done
-	
+	#while [[ $lb_response != *"Blue"* ]] || [[ $vmss1_response != *"Blue"* ]] 
+	#do
+	#	echo "Waiting for port to be open..."
+	#	echo "lb rsponse is: ${lb_response}"
+	#	echo "vmss1 response is: ${vmss1_response}"
+	#	sleep 1
+	#	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+	#	vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
+	#done
+	echo "close port"	
 	#Close port and start timer
 	$py close-vmss --vmss-id $vmss1_id 
 	#Start timer
 	startClosePortTiming=`date +%s`
 	#fetch response directly & via lb
+	echo "wait for status to change"
 	$py query-lb --vmss-id $vmss1_id --desire-unhealthy-status true
 	#Close timer
 	endClosePortTiming=`date +%s.%N`
