@@ -23,7 +23,7 @@ vmss2_id="${sub_base_path}/resourceGroups/${rg2_name}/providers/Microsoft.Comput
 hp_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/probes/${hp_name}"
 bap_id="${sub_base_path}/resourceGroups/${lb_rg}/providers/Microsoft.Network/loadBalancers/${lb_name}/backendAddressPools/${bap_name}"
 
-allowed_commands=["help","open_timer","close_timer"]
+allowed_commands=["help","open_timer","close_timer","deregister"]
 
 deregisterAllVMSS(){
 	#Disconnect both vmss from bap in case they were connected before
@@ -41,10 +41,14 @@ deregisterAllVMSS(){
 		echo "Failed to deregister vmss 2"
 	}
 }
+deregister(){
+	deregisterAllVMSS
+}
 
 help(){
 	echo "Script to test Forter VMSS PoC"
 	echo "Enter 1 or more of the following options:"
+	echo "deregister - deregister both vmss from lb"
 	echo "open_timer - how long it takes for a port open to take effect both directly & via lb"
 	echo "close_timer - how long it takes for a port close to stop responding directly & via lb"
 }
