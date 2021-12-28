@@ -18,7 +18,7 @@ source $HOME/.poetry/env
 poetry install
 
 cd switch
-pip install azure.mgmt.compute azure.identity azure.mgmt.network azure.mgmt.storage azure.mgmt.resource azure.monitor.query iohttp
+pip install azure.mgmt.compute azure.identity azure.mgmt.network azure.mgmt.storage azure.mgmt.resource azure.monitor.query aiohttp
 
 
 
