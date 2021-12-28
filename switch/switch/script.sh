@@ -100,22 +100,16 @@ close_timer(){
 	#Start timer
 	startClosePortTiming=`date +%s`
 	#fetch response directly & via lb
-	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
-	#wait for vmss & lb to return empty
-	while [[ $lb_response == *"Blue"* ]] && [[ $vmss1_response == *"Blue"* ]] 
-	do
-		echo "Waiting for port to be CLOSED..."
-		echo "lb rsponse is: ${lb_response}"
-		echo "vmss1 response is: ${vmss1_response}"
-		sleep 1
-		lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
-		vmss1_response=$(curl http://$vmss1_ip  --connect-timeout 3 -s)
-	done
+	$py query-lb --vmss-id $vmss1_id --desire-unhealthy-status
 	#Close timer
 	endClosePortTiming=`date +%s.%N`
+	
+	lb_response=$(curl http://$lb_ip --connect-timeout 3 -s)
+	vmss1_response=$(curl http://$vmss1_ip --connect-timeout 3 -s)
+	
 	echo "lb rsponse is: ${lb_response}"
 	echo "vmss1 response is: ${vmss1_response}"
+	
 	closePortTotalTime=$( echo "$endClosePortTiming - $startClosePortTiming" | bc -l )
 	#Echo total time taken
 	echo "total time: $closePortTotalTime"
@@ -137,6 +131,8 @@ else
 	done
 fi
 
+
+### FOR TESTING ###
 
 ### test order ###
 # 1. Connect VMSS1
